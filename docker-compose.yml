@@ -1,0 +1,62 @@
+# Webster 孤立交叉口配时服务 —— 一次构建拉起 app + PostgreSQL 16
+#
+#   docker compose up --build            # 对外服务： http://localhost:8080
+#   docker compose --profile test run --build test   # 随附自动化测试（含 PG 集成）
+
+services:
+  db:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_USER: webster
+      POSTGRES_PASSWORD: webster
+      POSTGRES_DB: webster
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webster -d webster"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      target: runtime
+    environment:
+      STORAGE: postgres
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: webster
+      PGPASSWORD: webster
+      PGDATABASE: webster
+      PORT: "8080"
+      LOG_LEVEL: info
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 随附自动化测试：单元测试 + 对真实 PostgreSQL 16 的仓储集成测试
+  test:
+    build:
+      context: .
+      target: test
+    environment:
+      # 打开门控的 PG 集成用例（未设置时该套件自动 skip）
+      RUN_PG_TESTS: "1"
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: webster
+      PGPASSWORD: webster
+      PGDATABASE: webster
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - test
+
+volumes:
+  pgdata:

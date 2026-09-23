@@ -1,0 +1,29 @@
+{
+  "name": "webster-timing-service",
+  "version": "1.0.0",
+  "description": "孤立交叉口 Webster 解析配时与延误扫描 HTTP 服务 (Fastify + TypeScript + PostgreSQL 16)",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node -e \"require('node:fs').copyFileSync('src/persistence/schema.sql','dist/persistence/schema.sql')\"",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "start": "node dist/app.js",
+    "dev": "tsx watch src/app.ts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "test:pg": "cross-env RUN_PG_TESTS=1 node --import tsx --test test/integration.postgres.test.ts"
+  },
+  "dependencies": {
+    "fastify": "^4.28.1",
+    "pg": "^8.12.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.15",
+    "@types/pg": "^8.11.6",
+    "cross-env": "^7.0.3",
+    "tsx": "^4.19.0",
+    "typescript": "~5.5.4"
+  }
+}
